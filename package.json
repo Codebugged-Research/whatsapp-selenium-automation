@@ -1,0 +1,36 @@
+{
+  "name": "whatsapp-sender",
+  "version": "1.0.0",
+  "main": "main.js",
+  "type": "commonjs",
+  "description": "WhatsApp message sender using Selenium in Electron GUI",
+  "author": "Aryaman Sinha",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "csv-parser": "^3.2.0",
+    "selenium-webdriver": "^4.38.0"
+  },
+  "devDependencies": {
+    "electron": "^39.2.3",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.aryaman.whatsapp",
+    "productName": "WhatsAppSender",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*"
+    ],
+    "mac": {
+    "target": ["dmg"]
+  },
+  "win": {
+    "target": ["nsis"]
+  }
+  }
+}
