@@ -25,8 +25,8 @@ Create a file named `whsend.csv` in the project root directory with the followin
 
 ```csv
 WHATSAPP,MESSAGE
-918840318667,Hello from bot!
-919876543210,Your custom message here
+919999999999,Hello from bot!
+918888888888,Your custom message here
 ```
 
 **Important Notes:**
