@@ -1,4 +1,3 @@
-// main.cjs
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -44,6 +43,19 @@ function loadCSV(filePath) {
       .on("end", () => resolve(out));
   });
 }
+const { dialog } = require("electron");
+
+ipcMain.handle("select-file", async () => {
+  const res = await dialog.showOpenDialog({
+    title: "Select CSV",
+    properties: ["openFile"],
+    filters: [{ name: "CSV", extensions: ["csv"] }]
+  });
+
+  if (res.canceled) return null;
+  return res.filePaths[0];
+});
+
 
 function randomDelay() {
   return Math.floor(Math.random() * (config.maxDelay - config.minDelay + 1) + config.minDelay);

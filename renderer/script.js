@@ -1,16 +1,19 @@
 const { ipcRenderer } = require("electron");
+
 const startBtn = document.getElementById("startBtn");
-const csvFile = document.getElementById("csvFile");
 const log = document.getElementById("log");
 
 startBtn.addEventListener("click", async () => {
-  if (!csvFile.files[0]) {
-    alert("Please select a CSV file!");
+  log.textContent = "";
+
+  const filePath = await ipcRenderer.invoke("select-file");
+
+  if (!filePath) {
+    alert("No CSV file selected!");
     return;
   }
 
-  const filePath = csvFile.files[0].path;
-  log.textContent = "Starting...";
+  log.textContent = "Starting...\n";
 
   ipcRenderer.invoke("send-messages", filePath);
 
