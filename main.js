@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const csv = require("csv-parser");
@@ -19,7 +19,6 @@ function createWindow() {
       contextIsolation: false
     }
   });
-
   mainWindow.loadFile(path.join("renderer", "index.html"));
 }
 
@@ -43,7 +42,6 @@ function loadCSV(filePath) {
       .on("end", () => resolve(out));
   });
 }
-const { dialog } = require("electron");
 
 ipcMain.handle("select-file", async () => {
   const res = await dialog.showOpenDialog({
@@ -51,37 +49,87 @@ ipcMain.handle("select-file", async () => {
     properties: ["openFile"],
     filters: [{ name: "CSV", extensions: ["csv"] }]
   });
-
   if (res.canceled) return null;
   return res.filePaths[0];
 });
-
 
 function randomDelay() {
   return Math.floor(Math.random() * (config.maxDelay - config.minDelay + 1) + config.minDelay);
 }
 
 ipcMain.handle("send-messages", async (event, filePath) => {
-  const list = await loadCSV(filePath);
-  const driver = await new Builder()
-    .forBrowser("chrome")
-    .setChromeOptions(new chrome.Options().addArguments("--start-maximized"))
-    .build();
-
-  await driver.get("https://web.whatsapp.com/");
-  mainWindow.webContents.send("log", "Scan QR code if needed...");
-  await driver.sleep(config.waitAfterLogin);
-
-  for (const item of list) {
-    const ok = await openChat(driver, item.number);
-    if (ok) {
-      await typeMessage(driver, item.message);
-      mainWindow.webContents.send("log", `Message sent to ${item.number}`);
-      await driver.sleep(config.waitAfterTyping);
+  let driver;
+  try {
+    mainWindow.webContents.send("log", "Loading CSV...");
+    const list = await loadCSV(filePath);
+    mainWindow.webContents.send("log", `Found ${list.length} contacts`);
+    
+    mainWindow.webContents.send("log", "Setting up Chrome...");
+    
+    const seleniumManagerPath = path.join(
+      app.isPackaged 
+        ? path.join(process.resourcesPath, "app.asar.unpacked", "node_modules", "selenium-webdriver")
+        : path.join(__dirname, "node_modules", "selenium-webdriver"),
+      "bin",
+      process.platform === "darwin" ? "macos" : (process.platform === "win32" ? "windows" : "linux"),
+      "selenium-manager"
+    );
+    
+    if (fs.existsSync(seleniumManagerPath)) {
+      mainWindow.webContents.send("log", "Found Selenium Manager");
+      if (process.platform !== "win32") {
+        const { execSync } = require("child_process");
+        try {
+          execSync(`chmod +x "${seleniumManagerPath}"`);
+          mainWindow.webContents.send("log", "Made Selenium Manager executable");
+        } catch (e) {
+          mainWindow.webContents.send("log", `Chmod warning: ${e.message}`);
+        }
+      }
+      process.env.SE_MANAGER_PATH = seleniumManagerPath;
     }
-    await driver.sleep(randomDelay());
+    
+    const options = new chrome.Options();
+    options.addArguments("--start-maximized");
+    options.addArguments("--disable-blink-features=AutomationControlled");
+    options.addArguments("--no-sandbox");
+    options.addArguments("--disable-dev-shm-usage");
+    options.addArguments("--disable-gpu");
+    
+    mainWindow.webContents.send("log", "Starting Chrome browser...");
+    driver = await new Builder()
+      .forBrowser("chrome")
+      .setChromeOptions(options)
+      .build();
+      
+    mainWindow.webContents.send("log", "Chrome started successfully");
+    await driver.get("https://web.whatsapp.com/");
+    mainWindow.webContents.send("log", "Scan QR code if needed...");
+    await driver.sleep(config.waitAfterLogin);
+    
+    for (const item of list) {
+      const ok = await openChat(driver, item.number);
+      if (ok) {
+        await typeMessage(driver, item.message);
+        mainWindow.webContents.send("log", `Message sent to ${item.number}`);
+        await driver.sleep(config.waitAfterTyping);
+      } else {
+        mainWindow.webContents.send("log", `Failed to open chat for ${item.number}`);
+      }
+      await driver.sleep(randomDelay());
+    }
+    
+    await driver.quit();
+    mainWindow.webContents.send("log", "All messages sent!");
+  } catch (error) {
+    mainWindow.webContents.send("log", `ERROR: ${error.message}`);
+    console.error("Full error:", error);
+    if (driver) {
+      try {
+        await driver.quit();
+      } catch (quitError) {
+        console.error("Error quitting driver:", quitError);
+      }
+    }
   }
-
-  await driver.quit();
-  mainWindow.webContents.send("log", "All messages sent!");
 });

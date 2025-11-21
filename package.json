@@ -24,13 +24,18 @@
       "output": "dist"
     },
     "files": [
-      "**/*"
+      "**/*",
+      "!dist/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/selenium-webdriver/bin/**/*",
+      "node_modules/selenium-webdriver/lib/**/*"
     ],
     "mac": {
-    "target": ["dmg"]
-  },
-  "win": {
-    "target": ["nsis"]
-  }
+      "target": ["dmg"]
+    },
+    "win": {
+      "target": ["nsis"]
+    }
   }
 }
