@@ -1,8 +1,9 @@
 const selectors = {
   searchBox: [
-    'div[aria-placeholder="Search or start a new chat"][contenteditable="true"]',
-    'div[data-tab="3"][contenteditable="true"]',
-    'div[role="textbox"][contenteditable="true"]'
+    'div[aria-label="Search input textbox"]',
+    'div[aria-placeholder="Ask Meta AI or Search"]',
+    'p.selectable-text.copyable-text.x15bjb6t.x1n2onr6',
+    'div[contenteditable="true"][role="textbox"][data-tab="3"]'
   ],
   newChatSearchBox: [
     'div[aria-label="Search name or number"][contenteditable="true"]',
