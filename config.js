@@ -6,9 +6,9 @@
 // };
 const config = {
   csvFile: "whsend.csv",
-  minDelay: 10000,
-  maxDelay: 20000,
-  waitAfterLogin: 12000,
+  minDelay: 15000,
+  maxDelay: 25000,
+  waitAfterLogin: 30000,
   waitAfterTyping: 3000
 };
 
